@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Match Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #f9a8d4;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      gap: 2rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #e2e8f0;
+    }
+
+    /* ── Scoreboards ── */
+    .scoreboards {
+      display: flex;
+      gap: 2rem;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .team-panel {
+      flex: 1;
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 1.4rem 1.2rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+
+    .team-panel.team-a { border-top: 4px solid #6366f1; }
+    .team-panel.team-b { border-top: 4px solid #f43f5e; }
+
+    .team-name {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .team-name:hover { color: #cbd5e1; }
+
+    .team-name .edit-icon {
+      font-size: 0.7rem;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .team-name:hover .edit-icon { opacity: 1; }
+
+    .team-name-input {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #6366f1;
+      color: #f1f5f9;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+      outline: none;
+      width: 120px;
+      font-family: inherit;
+    }
+
+    .score {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .team-a .score { color: #818cf8; }
+    .team-b .score { color: #fb7185; }
+
+    .point-btns {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      width: 100%;
+    }
+
+    .point-btn {
+      padding: 0.55rem 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, filter 0.1s;
+    }
+
+    .point-btn:active { transform: scale(0.93); }
+
+    .btn-minus  { background: #ef4444; color: #fff; }
+    .btn-zero   { background: #334155; color: #94a3b8; }
+    .btn-plus1  { background: #22c55e; color: #fff; }
+    .btn-plus3  { background: #f59e0b; color: #fff; }
+
+    .point-btn:hover { filter: brightness(1.15); }
+
+    /* ── Word Cards ── */
+    .cards-area {
+      display: flex;
+      gap: 2rem;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .word-card {
+      flex: 1;
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 160px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .word-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(244,63,94,0.08));
+    }
+
+    .word-card .label {
+      position: absolute;
+      top: 0.7rem;
+      left: 1rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #475569;
+    }
+
+    .word-card .word {
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 900;
+      text-align: center;
+      color: #f1f5f9;
+      position: relative;
+      z-index: 1;
+      transition: opacity 0.25s;
+    }
+
+    .word-card.flip .word {
+      opacity: 0;
+    }
+
+    /* ── Hint badge ── */
+    .hint-badge {
+      position: absolute;
+      bottom: 0.8rem;
+      right: 1rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #475569;
+      background: #0f172a80;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+    }
+
+    /* ── Action Buttons ── */
+    .actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .action-btn {
+      padding: 0.7rem 2rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: transform 0.1s, filter 0.1s;
+    }
+
+    .action-btn:active { transform: scale(0.95); }
+    .action-btn:hover  { filter: brightness(1.1); }
+
+    .btn-shuffle { background: #6366f1; color: #fff; }
+    .btn-reset   { background: #334155; color: #94a3b8; }
+
+    /* ── Category tag ── */
+    .category-tag {
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .category-tag span {
+      color: #a78bfa;
+      font-weight: 700;
+    }
+
+    /* ── Timer ── */
+    .timer-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .timer-display {
+      font-size: 4rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      line-height: 1;
+      color: #e2e8f0;
+      transition: color 0.3s;
+      cursor: pointer;
+      user-select: none;
+      width: 160px;
+      text-align: center;
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .timer-display:hover { filter: brightness(1.1); }
+
+    .timer-display.warning { color: #f59e0b; }
+    .timer-display.danger  { color: #ef4444; }
+    .timer-display.running { box-shadow: 0 0 0 3px #6366f1, 0 4px 24px rgba(0,0,0,0.3); }
+
+    .timer-hint {
+      font-size: 0.75rem;
+      color: #475569;
+      letter-spacing: 0.5px;
+    }
+
+    .active-team-badge {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 0.3rem 1rem;
+      border-radius: 99px;
+      background: #1e293b;
+    }
+
+    .active-team-badge.team-a { color: #818cf8; border: 1.5px solid #6366f1; }
+    .active-team-badge.team-b { color: #fb7185; border: 1.5px solid #f43f5e; }
+    .active-team-badge.idle   { color: #475569; border: 1.5px solid #334155; }
+
+    /* highlight the active team panel */
+    .team-panel.active-turn { box-shadow: 0 0 0 3px currentColor, 0 4px 24px rgba(0,0,0,0.3); }
+    .team-panel.team-a.active-turn { box-shadow: 0 0 0 3px #6366f1, 0 4px 24px rgba(0,0,0,0.3); }
+    .team-panel.team-b.active-turn { box-shadow: 0 0 0 3px #f43f5e, 0 4px 24px rgba(0,0,0,0.3); }
+  </style>
+</head>
+<body>
+
+  <h1>Word Match</h1>
+
+  <!-- Timer -->
+  <div class="timer-section">
+    <div class="active-team-badge idle" id="activeBadge">No team active</div>
+    <div class="timer-display" id="timerDisplay" onclick="toggleTimer()">1:00</div>
+    <div class="timer-hint">Click timer to start / pause</div>
+  </div>
+
+  <!-- Scoreboards -->
+  <div class="scoreboards">
+    <div class="team-panel team-a" id="panelA">
+      <div class="team-name" id="nameA" onclick="editName('A')">
+        <span id="nameLabelA">Team A</span>
+        <span class="edit-icon">✏️</span>
+      </div>
+      <div class="score" id="scoreA">0</div>
+      <div class="point-btns">
+        <button class="point-btn btn-minus"  onclick="addScore('A', -1)">−1</button>
+        <button class="point-btn btn-zero"   onclick="addScore('A',  0)">0</button>
+        <button class="point-btn btn-plus1"  onclick="addScore('A',  1)">+1</button>
+        <button class="point-btn btn-plus3"  onclick="addScore('A',  3)">+3</button>
+      </div>
+    </div>
+
+    <div class="team-panel team-b" id="panelB">
+      <div class="team-name" id="nameB" onclick="editName('B')">
+        <span id="nameLabelB">Team B</span>
+        <span class="edit-icon">✏️</span>
+      </div>
+      <div class="score" id="scoreB">0</div>
+      <div class="point-btns">
+        <button class="point-btn btn-minus"  onclick="addScore('B', -1)">−1</button>
+        <button class="point-btn btn-zero"   onclick="addScore('B',  0)">0</button>
+        <button class="point-btn btn-plus1"  onclick="addScore('B',  1)">+1</button>
+        <button class="point-btn btn-plus3"  onclick="addScore('B',  3)">+3</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Word Cards -->
+  <div class="category-tag">Category: <span id="categoryLabel">—</span></div>
+
+  <div class="cards-area">
+    <div class="word-card" id="card1">
+      <div class="label">Word 1</div>
+      <div class="word" id="word1">—</div>
+    </div>
+    <div class="word-card" id="card2">
+      <div class="label">Word 2</div>
+      <div class="word" id="word2">—</div>
+      <div class="hint-badge">Related ↔</div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="action-btn btn-shuffle" onclick="shuffle()">🔀 Shuffle</button>
+    <button class="action-btn btn-reset"   onclick="reset()">↺ Reset</button>
+  </div>
+
+  <script>
+    const wordPairs = [
+      // People & Roles
+      { category: "People & Roles", words: ["Big",      "Shot"]      },
+      { category: "People & Roles", words: ["Wise",     "Guy"]       },
+      { category: "People & Roles", words: ["Smart",    "Alec"]      },
+      { category: "People & Roles", words: ["Bad",      "Boy"]       },
+      { category: "People & Roles", words: ["Good",     "Girl"]      },
+      { category: "People & Roles", words: ["Mad",      "Scientist"] },
+      { category: "People & Roles", words: ["Old",      "Man"]       },
+      { category: "People & Roles", words: ["Young",    "Lady"]      },
+      { category: "People & Roles", words: ["Tough",    "Guy"]       },
+      { category: "People & Roles", words: ["Free",     "Spirit"]    },
+      { category: "People & Roles", words: ["Hard",     "Worker"]    },
+      { category: "People & Roles", words: ["Best",     "Man"]       },
+      { category: "People & Roles", words: ["First",    "Lady"]      },
+      { category: "People & Roles", words: ["Wild",     "Child"]     },
+      { category: "People & Roles", words: ["Rich",     "Uncle"]     },
+      { category: "People & Roles", words: ["Plain",    "Jane"]      },
+      { category: "People & Roles", words: ["Lazy",     "Bones"]     },
+      { category: "People & Roles", words: ["Smart",    "Mouth"]     },
+      { category: "People & Roles", words: ["Strong",   "Man"]       },
+      { category: "People & Roles", words: ["Wise",     "Elder"]     },
+      // Animals & Creatures
+      { category: "Animals",        words: ["Polar",    "Bear"]      },
+      { category: "Animals",        words: ["Blue",     "Whale"]     },
+      { category: "Animals",        words: ["Sea",      "Horse"]     },
+      { category: "Animals",        words: ["Tree",     "Frog"]      },
+      { category: "Animals",        words: ["Bald",     "Eagle"]     },
+      { category: "Animals",        words: ["Black",    "Bear"]      },
+      { category: "Animals",        words: ["Fruit",    "Fly"]       },
+      { category: "Animals",        words: ["Great",    "White"]     },
+      { category: "Animals",        words: ["Golden",   "Eagle"]     },
+      { category: "Animals",        words: ["Grizzly",  "Bear"]      },
+      { category: "Animals",        words: ["Killer",   "Whale"]     },
+      { category: "Animals",        words: ["Sea",      "Turtle"]    },
+      { category: "Animals",        words: ["Tree",     "Kangaroo"]  },
+      { category: "Animals",        words: ["Komodo",   "Dragon"]    },
+      { category: "Animals",        words: ["Water",    "Buffalo"]   },
+      { category: "Animals",        words: ["Mountain", "Lion"]      },
+      { category: "Animals",        words: ["Giant",    "Panda"]     },
+      { category: "Animals",        words: ["Red",      "Fox"]       },
+      { category: "Animals",        words: ["White",    "Rhino"]     },
+      { category: "Animals",        words: ["Blue",     "Jay"]       },
+      { category: "Animals",        words: ["Black",    "Widow"]     },
+      { category: "Animals",        words: ["Green",    "Anaconda"]  },
+      { category: "Animals",        words: ["Flying",   "Squirrel"]  },
+      { category: "Animals",        words: ["Sea",      "Lion"]      },
+      { category: "Animals",        words: ["Ground",   "Hog"]       },
+      { category: "Animals",        words: ["Bull",     "Frog"]      },
+      { category: "Animals",        words: ["Honey",    "Bee"]       },
+      { category: "Animals",        words: ["Timber",   "Wolf"]      },
+      { category: "Animals",        words: ["Bengal",   "Tiger"]     },
+      { category: "Animals",        words: ["Barn",     "Owl"]       },
+      // Nature & Places
+      { category: "Nature & Places", words: ["High",    "Tide"]      },
+      { category: "Nature & Places", words: ["Low",     "Gear"]      },
+      { category: "Nature & Places", words: ["Deep",    "Sea"]       },
+      { category: "Nature & Places", words: ["Dry",     "Land"]      },
+      { category: "Nature & Places", words: ["Full",    "Moon"]      },
+      { category: "Nature & Places", words: ["New",     "Moon"]      },
+      { category: "Nature & Places", words: ["Small",   "Town"]      },
+      { category: "Nature & Places", words: ["Big",     "City"]      },
+      { category: "Nature & Places", words: ["North",   "Pole"]      },
+      { category: "Nature & Places", words: ["South",   "Pole"]      },
+      { category: "Nature & Places", words: ["West",    "Coast"]     },
+      { category: "Nature & Places", words: ["East",    "Coast"]     },
+      { category: "Nature & Places", words: ["Dry",     "Ice"]       },
+      { category: "Nature & Places", words: ["Hot",     "Spot"]      },
+      { category: "Nature & Places", words: ["Open",    "Road"]      },
+      { category: "Nature & Places", words: ["Dead",    "End"]       },
+      { category: "Nature & Places", words: ["Ground",  "Floor"]     },
+      { category: "Nature & Places", words: ["Main",    "Street"]    },
+      { category: "Nature & Places", words: ["Middle",  "Class"]     },
+      { category: "Nature & Places", words: ["High",    "School"]    },
+      // Food & Objects
+      { category: "Food & Objects",  words: ["Fast",    "Food"]      },
+      { category: "Food & Objects",  words: ["Hot",     "Dog"]       },
+      { category: "Food & Objects",  words: ["Ice",     "Cream"]     },
+      { category: "Food & Objects",  words: ["Potato",  "Chip"]      },
+      { category: "Food & Objects",  words: ["Soda",    "Pop"]       },
+      { category: "Food & Objects",  words: ["Peanut",  "Butter"]    },
+      { category: "Food & Objects",  words: ["Jelly",   "Bean"]      },
+      { category: "Food & Objects",  words: ["Light",   "Bulb"]      },
+      { category: "Food & Objects",  words: ["Fire",    "Truck"]     },
+      { category: "Food & Objects",  words: ["Police",  "Car"]       },
+      { category: "Food & Objects",  words: ["School",  "Bus"]       },
+      { category: "Food & Objects",  words: ["Swimming","Pool"]      },
+      { category: "Food & Objects",  words: ["Sleeping","Bag"]       },
+      { category: "Food & Objects",  words: ["Lunch",   "Box"]       },
+      { category: "Food & Objects",  words: ["Birthday","Cake"]      },
+      { category: "Food & Objects",  words: ["Coffee",  "Bean"]      },
+      { category: "Food & Objects",  words: ["Silver",  "Spoon"]     },
+      { category: "Food & Objects",  words: ["Front",   "Door"]      },
+      { category: "Food & Objects",  words: ["Back",    "Yard"]      },
+      { category: "Food & Objects",  words: ["Christmas","Tree"]     },
+      // Concepts & Descriptions
+      { category: "Concepts",        words: ["Red",     "Tape"]      },
+      { category: "Concepts",        words: ["Real",    "Estate"]    },
+      { category: "Concepts",        words: ["Common",  "Sense"]     },
+      { category: "Concepts",        words: ["Big",     "Deal"]      },
+      { category: "Concepts",        words: ["Small",   "Talk"]      },
+      { category: "Concepts",        words: ["Sweet",   "Tooth"]     },
+      { category: "Concepts",        words: ["Cold",    "Shoulder"]  },
+      { category: "Concepts",        words: ["Long",    "Shot"]      },
+      { category: "Concepts",        words: ["Wild",    "Guess"]     },
+      { category: "Concepts",        words: ["Tall",    "Tale"]      },
+    ];
+
+    // ── Music Engine (Web Audio API) ──────────────────────────────────
+    const music = (() => {
+      let ac = null;
+      let playing = false;
+      let schedulerTimer = null;
+      let step = 0;
+      let nextStepTime = 0;
+
+      const LOOKAHEAD_MS  = 30;
+      const SCHEDULE_AHEAD = 0.12;
+
+      function getAC() {
+        if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+        return ac;
+      }
+
+      function bpm() {
+        if (timeLeft <= 10) return 180;
+        if (timeLeft <= 20) return 155;
+        return 128;
+      }
+
+      function stepDur() { return (60 / bpm()) / 4; } // 16th-note duration
+
+      function kick(t) {
+        const a = getAC();
+        const o = a.createOscillator(), g = a.createGain();
+        o.connect(g); g.connect(a.destination);
+        o.frequency.setValueAtTime(180, t);
+        o.frequency.exponentialRampToValueAtTime(0.001, t + 0.45);
+        g.gain.setValueAtTime(1.8, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+        o.start(t); o.stop(t + 0.45);
+      }
+
+      function snare(t) {
+        const a = getAC();
+        const len = Math.floor(a.sampleRate * 0.18);
+        const buf = a.createBuffer(1, len, a.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        const src = a.createBufferSource(); src.buffer = buf;
+        const flt = a.createBiquadFilter(); flt.type = 'bandpass'; flt.frequency.value = 1300; flt.Q.value = 0.6;
+        const g = a.createGain();
+        g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        src.connect(flt); flt.connect(g); g.connect(a.destination);
+        src.start(t); src.stop(t + 0.18);
+      }
+
+      function hihat(t, vol = 0.18) {
+        const a = getAC();
+        const len = Math.floor(a.sampleRate * 0.045);
+        const buf = a.createBuffer(1, len, a.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        const src = a.createBufferSource(); src.buffer = buf;
+        const flt = a.createBiquadFilter(); flt.type = 'highpass'; flt.frequency.value = 9000;
+        const g = a.createGain();
+        g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+        src.connect(flt); flt.connect(g); g.connect(a.destination);
+        src.start(t); src.stop(t + 0.05);
+      }
+
+      function synth(t, freq, dur, vol = 0.18) {
+        const a = getAC();
+        const o = a.createOscillator(), g = a.createGain();
+        const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 3500;
+        o.type = 'sawtooth'; o.frequency.value = freq;
+        g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        o.connect(f); f.connect(g); g.connect(a.destination);
+        o.start(t); o.stop(t + dur + 0.01);
+      }
+
+      function bass(t, freq) {
+        const a = getAC();
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = 'triangle'; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.7, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        o.connect(g); g.connect(a.destination);
+        o.start(t); o.stop(t + 0.2);
+      }
+
+      // C minor pentatonic: C D# F G A# (energetic, game-show feel)
+      // Melody plays every 2 steps (8th notes), 8 notes per bar
+      const MELODY_LO = [523, 622, 698, 784, 932, 784, 698, 622]; // C5 Eb5 F5 G5 Bb5 ...
+      const MELODY_HI = [784, 932, 1047,932, 784, 698, 932,1047]; // higher octave for urgency
+      // Bass: C3 G3 Bb3 F3 cycle
+      const BASS     = [131, 196, 233, 175];
+
+      function scheduleStep(s, t) {
+        const i = s % 16;
+        const urgent = timeLeft <= 20;
+
+        // Kick: beats 1 and 3 (steps 0, 8)
+        if (i === 0 || i === 8) kick(t);
+
+        // Snare: beats 2 and 4 (steps 4, 12)
+        if (i === 4 || i === 12) snare(t);
+
+        // Hi-hats: every even step; every step when urgent
+        if (i % 2 === 0) hihat(t);
+        if (urgent && i % 2 === 1) hihat(t, 0.09);
+
+        // Melody: every 2 steps
+        if (i % 2 === 0) {
+          const mi = (i / 2) % 8;
+          const mel = urgent ? MELODY_HI : MELODY_LO;
+          synth(t, mel[mi], stepDur() * 1.8);
+        }
+
+        // Bass: every 4 steps
+        if (i % 4 === 0) bass(t, BASS[(i / 4) % 4]);
+      }
+
+      function scheduler() {
+        if (!playing) return;
+        const a = getAC();
+        while (nextStepTime < a.currentTime + SCHEDULE_AHEAD) {
+          scheduleStep(step, nextStepTime);
+          nextStepTime += stepDur();
+          step++;
+        }
+        schedulerTimer = setTimeout(scheduler, LOOKAHEAD_MS);
+      }
+
+      return {
+        start() {
+          if (playing) return;
+          playing = true;
+          const a = getAC();
+          if (a.state === 'suspended') a.resume();
+          nextStepTime = a.currentTime + 0.05;
+          step = 0;
+          scheduler();
+        },
+        stop() {
+          playing = false;
+          clearTimeout(schedulerTimer);
+        }
+      };
+    })();
+    // ─────────────────────────────────────────────────────────────────
+
+    function playTimeUpSound() {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const master = ac.createGain();
+      master.gain.value = 0.55;
+      master.connect(ac.destination);
+
+      function tone(freq, start, dur, type = 'square', vol = 0.3) {
+        const o = ac.createOscillator();
+        const g = ac.createGain();
+        o.type = type;
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0, start);
+        g.gain.linearRampToValueAtTime(vol, start + 0.02);
+        g.gain.setValueAtTime(vol, start + dur - 0.04);
+        g.gain.linearRampToValueAtTime(0, start + dur);
+        o.connect(g); g.connect(master);
+        o.start(start); o.stop(start + dur + 0.01);
+      }
+
+      function crash(start) {
+        const len = Math.floor(ac.sampleRate * 0.6);
+        const buf = ac.createBuffer(1, len, ac.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.5);
+        const src = ac.createBufferSource(); src.buffer = buf;
+        const hpf = ac.createBiquadFilter(); hpf.type = 'highpass'; hpf.frequency.value = 5000;
+        const g = ac.createGain(); g.gain.value = 0.35;
+        src.connect(hpf); hpf.connect(g); g.connect(master);
+        src.start(start); src.stop(start + 0.6);
+      }
+
+      const t = ac.currentTime + 0.05;
+
+      // Fanfare: ascending triumphal notes
+      tone(330, t + 0.00, 0.12, 'square', 0.28);
+      tone(330, t + 0.13, 0.12, 'square', 0.28);
+      tone(330, t + 0.26, 0.12, 'square', 0.28);
+      tone(262, t + 0.26, 0.12, 'triangle', 0.18); // harmony
+      tone(392, t + 0.40, 0.20, 'square', 0.30);
+      tone(311, t + 0.40, 0.20, 'triangle', 0.18);
+      tone(494, t + 0.62, 0.35, 'square', 0.30);
+      tone(392, t + 0.62, 0.35, 'triangle', 0.18);
+      // Big final chord
+      tone(523, t + 1.00, 0.55, 'square',   0.28);
+      tone(659, t + 1.00, 0.55, 'square',   0.22);
+      tone(784, t + 1.00, 0.55, 'triangle', 0.18);
+      crash(t + 1.00);
+    }
+
+    const teamNames = { A: 'Team A', B: 'Team B' };
+
+    function editName(team) {
+      const container = document.getElementById('name' + team);
+      const label = document.getElementById('nameLabel' + team);
+      if (container.querySelector('input')) return; // already editing
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'team-name-input';
+      input.value = teamNames[team];
+      input.maxLength = 16;
+      input.onclick = e => e.stopPropagation();
+
+      container.innerHTML = '';
+      container.appendChild(input);
+      input.focus();
+      input.select();
+
+      function commit() {
+        const val = input.value.trim() || (team === 'A' ? 'Team A' : 'Team B');
+        teamNames[team] = val;
+        container.innerHTML = `<span id="nameLabel${team}">${val}</span><span class="edit-icon">✏️</span>`;
+        updateActiveBadge();
+      }
+
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') input.blur();
+        if (e.key === 'Escape') { input.value = teamNames[team]; input.blur(); }
+      });
+    }
+
+    let scores = { A: 0, B: 0 };
+    let lastIndex = -1;
+
+    // Timer state
+    const TIMER_DURATION = 60;
+    let timeLeft = TIMER_DURATION;
+    let timerRunning = false;
+    let timerInterval = null;
+    let activeTeam = null; // 'A' or 'B' or null
+
+    function toggleTimer() {
+      if (timerRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      timerRunning = true;
+      document.getElementById('timerDisplay').classList.add('running');
+      if (!activeTeam) activeTeam = 'A';
+      updateActiveBadge();
+      music.start();
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        renderTimer();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerRunning = false;
+          music.stop();
+          document.getElementById('timerDisplay').classList.remove('running');
+          playTimeUpSound();
+          activeTeam = activeTeam === 'A' ? 'B' : 'A';
+          timeLeft = TIMER_DURATION;
+          renderTimer();
+          updateActiveBadge();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      music.stop();
+      document.getElementById('timerDisplay').classList.remove('running');
+    }
+
+    function renderTimer() {
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      const display = document.getElementById('timerDisplay');
+      display.textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+      display.classList.remove('warning', 'danger');
+      if (timeLeft <= 10) display.classList.add('danger');
+      else if (timeLeft <= 20) display.classList.add('warning');
+    }
+
+    function updateActiveBadge() {
+      const badge = document.getElementById('activeBadge');
+      document.getElementById('panelA').classList.remove('active-turn');
+      document.getElementById('panelB').classList.remove('active-turn');
+      if (!activeTeam) {
+        badge.textContent = 'No team active';
+        badge.className = 'active-team-badge idle';
+      } else {
+        badge.textContent = `${teamNames[activeTeam]}'s Turn`;
+        badge.className = `active-team-badge team-${activeTeam.toLowerCase()}`;
+        document.getElementById('panel' + activeTeam).classList.add('active-turn');
+      }
+    }
+
+    function addScore(team, pts) {
+      scores[team] += pts;
+      document.getElementById('score' + team).textContent = scores[team];
+      shuffle();
+    }
+
+    function shuffle() {
+      let idx;
+      do { idx = Math.floor(Math.random() * wordPairs.length); } while (idx === lastIndex);
+      lastIndex = idx;
+
+      const pair = wordPairs[idx];
+      const card1 = document.getElementById('card1');
+      const card2 = document.getElementById('card2');
+
+      card1.classList.add('flip');
+      card2.classList.add('flip');
+
+      setTimeout(() => {
+        document.getElementById('word1').textContent = pair.words[0];
+        document.getElementById('word2').textContent = pair.words[1];
+        document.getElementById('categoryLabel').textContent = pair.category;
+        card1.classList.remove('flip');
+        card2.classList.remove('flip');
+      }, 250);
+    }
+
+    function reset() {
+      scores = { A: 0, B: 0 };
+      document.getElementById('scoreA').textContent = '0';
+      document.getElementById('scoreB').textContent = '0';
+      pauseTimer();
+      timeLeft = TIMER_DURATION;
+      activeTeam = null;
+      renderTimer();
+      updateActiveBadge();
+      shuffle();
+    }
+
+    // Start with a random pair
+    shuffle();
+    renderTimer();
+  </script>
+</body>
+</html>
